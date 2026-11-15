@@ -13,11 +13,11 @@ public final class ModAttachments {
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, AngelOfDeathBoss.MOD_ID);
 
     /** Smooth 0.0F-1.0F wing glow after a boost; decays server-side and is synced to clients. */
-    public static final Supplier<AttachmentType<Float>> BOOST_GLOW_ALPHA = ATTACHMENTS.register("boost_glow_alpha",
-            () -> AttachmentType.builder(() -> 0.0F)
-                    .serialize(Codec.FLOAT)
-                    .sync(ByteBufCodecs.FLOAT)
-                    .build());
+   public static final Supplier<AttachmentType<Float>> BOOST_GLOW_ALPHA = ATTACHMENT_TYPES.register(
+        "boost_glow_alpha",
+        () -> AttachmentType.builder(() -> 0.0F)
+                .build()
+);
 
     private ModAttachments() {
     }
