@@ -35,6 +35,7 @@ public class VoidFeatherEntity extends Projectile {
             SynchedEntityData.defineId(VoidFeatherEntity.class, EntityDataSerializers.BOOLEAN);
 
     private int stuckTicks;
+    private int clientStuckAge;
     private int flightTicks;
     @Nullable
     private UUID stuckTarget;
@@ -57,6 +58,11 @@ public class VoidFeatherEntity extends Projectile {
 
     public void setWhite(boolean white) {
         this.entityData.set(IS_WHITE, white);
+    }
+
+    /** Client only: ticks since this feather was first seen stuck (0 while in flight). */
+    public int getClientStuckAge() {
+        return this.clientStuckAge;
     }
 
     public boolean isStuck() {
@@ -97,7 +103,9 @@ public class VoidFeatherEntity extends Projectile {
     public void tick() {
         super.tick();
         if (isStuck()) {
-            if (!this.level().isClientSide) {
+            if (this.level().isClientSide) {
+                this.clientStuckAge++;
+            } else {
                 tickStuck();
             }
             return;

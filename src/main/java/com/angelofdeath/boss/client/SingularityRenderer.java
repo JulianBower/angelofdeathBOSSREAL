@@ -11,13 +11,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import org.joml.Quaternionf;
 
-/**
- * Black / White / Grey Hole renderer (from the original singularity mod). Adapted for the boss fight:
- * <ul>
- *   <li>attack-variant holes are drawn smaller and without accretion rings;</li>
- *   <li>holes flagged owner-rendered (palm / back-mounted) are skipped, the boss renderer draws those itself.</li>
- * </ul>
- */
 public class SingularityRenderer extends EntityRenderer<SingularityEntity> {
     public SingularityRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -25,24 +18,22 @@ public class SingularityRenderer extends EntityRenderer<SingularityEntity> {
 
     @Override
     public boolean shouldRender(SingularityEntity entity, Frustum frustum, double camX, double camY, double camZ) {
-        return !entity.isOwnerRendered();
+        return true;
     }
 
     @Override
     public void render(SingularityEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight) {
         if (entity.isOwnerRendered()) {
-            return;
+            return; // the Angel of Death draws these himself (palm / back-mounted), see AngelOfDeathBossRenderer
         }
         float time = entity.tickCount + partialTick;
         float remaining = entity.getDuration() - time;
-        boolean variant = entity.isAttackVariant();
-        float fade = variant ? 4.0F : 6.0F;
-        float scale = Math.min(1.0F, time / fade) * Mth.clamp(remaining / fade, 0.0F, 1.0F);
+        float scale = Math.min(1.0F, time / 6.0F) * Mth.clamp(remaining / 6.0F, 0.0F, 1.0F);
         if (scale <= 0.0F) {
             return;
         }
-        float radius = SingularityVisuals.placedRadius(entity.getPower()) * scale * (variant ? 0.6F : 1.0F);
+        float radius = SingularityVisuals.placedRadius(entity.getPower()) * scale;
         Quaternionf cameraOrientation = this.entityRenderDispatcher.cameraOrientation();
 
         poseStack.pushPose();
@@ -58,7 +49,7 @@ public class SingularityRenderer extends EntityRenderer<SingularityEntity> {
             double selfZ = Mth.lerp(partialTick, entity.zOld, entity.getZ());
             poseStack.translate(hostX - selfX, hostY - selfY, hostZ - selfZ);
         }
-        SingularityVisuals.renderOrb(poseStack, buffer, cameraOrientation, entity.getMode(), radius, time, variant);
+        SingularityVisuals.renderOrb(poseStack, buffer, cameraOrientation, entity.getMode(), radius, time);
         poseStack.popPose();
         super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
     }

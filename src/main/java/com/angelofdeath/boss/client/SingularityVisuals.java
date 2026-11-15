@@ -1,6 +1,7 @@
 package com.angelofdeath.boss.client;
 
 import com.angelofdeath.boss.AngelOfDeathBoss;
+import com.angelofdeath.boss.entity.AngelOfDeathBossEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -20,8 +21,7 @@ public final class SingularityVisuals {
     public static final int MODE_BLACK_HOLE = 0;
     public static final int MODE_WHITE_HOLE = 1;
     public static final int MODE_GREY_HOLE = 2;
-    /** Length (ticks) of the black + white fusion preview. */
-    public static final int FUSION_TICKS = 30;
+    public static final float FUSION_TICKS = AngelOfDeathBossEntity.TRANSITION_LENGTH;
 
     private static final int SLICES = 28;
     private static final int STACKS = 18;
@@ -56,16 +56,10 @@ public final class SingularityVisuals {
 
     public static void renderOrb(PoseStack ps, MultiBufferSource buffer, Quaternionf camera, int mode, float radius,
                                  float time) {
-        renderOrb(ps, buffer, camera, mode, radius, time, false);
-    }
-
-    /** Attack-variant holes are drawn without the accretion rings so combo props read cleaner. */
-    public static void renderOrb(PoseStack ps, MultiBufferSource buffer, Quaternionf camera, int mode, float radius,
-                                 float time, boolean attackVariant) {
         switch (mode) {
             case MODE_WHITE_HOLE -> renderWhiteHole(ps, buffer, camera, radius, time);
             case MODE_GREY_HOLE -> renderGreyHole(ps, buffer, camera, radius, time);
-            default -> renderBlackHole(ps, buffer, camera, radius, time, !attackVariant);
+            default -> renderBlackHole(ps, buffer, camera, radius, time, true);
         }
     }
 

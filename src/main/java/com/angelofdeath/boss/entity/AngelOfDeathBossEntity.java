@@ -4,6 +4,7 @@ import com.angelofdeath.boss.logic.SingularityActions;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -245,6 +246,12 @@ public class AngelOfDeathBossEntity extends Monster {
     public float glowWeightO;
     public float transitionWeight;
     public float transitionWeightO;
+    /** Client: ticks the current ATTACK_POSE has been held (drives the pose-5 wing sequence). */
+    public int poseTicks;
+    private int lastClientPose;
+    /** Client: where the pose-5 black tornado stands (captured when it spawns), null otherwise. */
+    @Nullable
+    public Vec3 clientTornadoCenter;
 
     @Override
     public void tick() {
@@ -256,6 +263,28 @@ public class AngelOfDeathBossEntity extends Monster {
 
     private void tickClientAnimation() {
         int pose = getAttackPose();
+        if (pose != this.lastClientPose) {
+            this.lastClientPose = pose;
+            this.poseTicks = 0;
+        } else {
+            this.poseTicks++;
+        }
+        if (pose != 5) {
+            this.clientTornadoCenter = null;
+        } else if (this.poseTicks == 10) {
+            Vec3 fwd = Vec3.directionFromRotation(0.0F, getYRot());
+            double cx = getX() + fwd.x * 6.0D;
+            double cz = getZ() + fwd.z * 6.0D;
+            double base = getY() - 4.0D;
+            for (int i = 0; i < 18; i++) {
+                BlockPos below = BlockPos.containing(cx, getY() - i, cz);
+                if (!this.level().getBlockState(below).isAir()) {
+                    base = below.getY() + 1.0D;
+                    break;
+                }
+            }
+            this.clientTornadoCenter = new Vec3(cx, base, cz);
+        }
         for (int i = 0; i < this.poseWeight.length; i++) {
             this.poseWeightO[i] = this.poseWeight[i];
             float target = i == pose ? 1.0F : 0.0F;

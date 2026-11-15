@@ -2,6 +2,7 @@ package com.angelofdeath.boss;
 
 import com.angelofdeath.boss.entity.AngelOfDeathBossEntity;
 import com.angelofdeath.boss.entity.VoidCrowEntity;
+import com.angelofdeath.boss.network.BoostGlowPayload;
 import com.angelofdeath.boss.network.WingsBoostPayload;
 import com.angelofdeath.boss.registry.ModAttachments;
 import com.angelofdeath.boss.registry.ModEntities;
@@ -31,6 +32,8 @@ public class AngelOfDeathBoss {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToServer(WingsBoostPayload.TYPE, WingsBoostPayload.CODEC, WingsBoostPayload::handle);
+        var registrar = event.registrar("1");
+        registrar.playToServer(WingsBoostPayload.TYPE, WingsBoostPayload.CODEC, WingsBoostPayload::handle);
+        registrar.playToClient(BoostGlowPayload.TYPE, BoostGlowPayload.CODEC, BoostGlowPayload::handle);
     }
 }

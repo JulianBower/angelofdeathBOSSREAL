@@ -5,7 +5,7 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ModModelLayers {
-    public static final ModelLayerLocation WINGS = layer("wings");
+    public static final ModelLayerLocation WINGS = layer("angel_wings");
     public static final ModelLayerLocation BOSS = layer("angel_of_death");
     public static final ModelLayerLocation CROW = layer("void_crow");
 

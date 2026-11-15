@@ -16,9 +16,9 @@ public final class ModEntities {
     public static final DeferredRegister<EntityType<?>> ENTITIES =
             DeferredRegister.create(Registries.ENTITY_TYPE, AngelOfDeathBoss.MOD_ID);
 
-    // Allay is 0.35 x 0.6; crows are ~1.8x that.
-    private static final float CROW_W = 0.35F * 1.8F;
-    private static final float CROW_H = 0.6F * 1.8F;
+    // Allay is 0.35 x 0.6; crows are 3.0x that.
+    private static final float CROW_W = 0.35F * 3.0F;
+    private static final float CROW_H = 0.6F * 3.0F;
 
     public static final DeferredHolder<EntityType<?>, EntityType<SingularityEntity>> SINGULARITY = register(
             "singularity", () -> EntityType.Builder.<SingularityEntity>of(SingularityEntity::new, MobCategory.MISC)
