@@ -1,0 +1,34 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "conditions": [
+        { "condition": "minecraft:random_chance", "chance": 0.2 },
+        {
+          "condition": "minecraft:inverted",
+          "term": {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": { "nbt": "{White:1b}" }
+          }
+        }
+      ],
+      "entries": [ { "type": "minecraft:item", "name": "angelofdeathboss:black_feather" } ]
+    },
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "conditions": [
+        { "condition": "minecraft:random_chance", "chance": 0.2 },
+        {
+          "condition": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": { "nbt": "{White:1b}" }
+        }
+      ],
+      "entries": [ { "type": "minecraft:item", "name": "angelofdeathboss:white_feather" } ]
+    }
+  ]
+}

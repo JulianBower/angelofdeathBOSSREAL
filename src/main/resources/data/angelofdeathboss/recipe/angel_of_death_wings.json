@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "BWB",
+    "WSW",
+    "BWB"
+  ],
+  "key": {
+    "B": { "item": "angelofdeathboss:black_feather" },
+    "W": { "item": "angelofdeathboss:white_feather" },
+    "S": { "item": "angelofdeathboss:the_singularity" }
+  },
+  "result": {
+    "id": "angelofdeathboss:angel_of_death_wings",
+    "count": 1
+  }
+}
