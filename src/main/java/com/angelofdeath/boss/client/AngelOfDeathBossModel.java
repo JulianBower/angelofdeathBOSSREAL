@@ -15,18 +15,19 @@ import net.minecraft.util.Mth;
 
 /**
  * Angel of Death: hooded #0F0F0F cloak, #2A2A2A mask with dark eye slits, bare arms (no staff) and multi-tiered wings
- * built from the same feather cubes as the player wings. Texture 128x128.
+ * with the player wing model rendered on his back by BossWingsLayer. Texture 128x128.
  */
 public class AngelOfDeathBossModel extends EntityModel<AngelOfDeathBossEntity> {
+    /** Wing pose for the separately rendered AngelOfDeathWingsModel (see BossWingsLayer). */
+    public float wingUp;
+    public float wingSweep;
     private final ModelPart root;
     private final ModelPart head;
-    private final ModelPart body;
+    public final ModelPart body;
     private final ModelPart rightArm;
     private final ModelPart leftArm;
     private final ModelPart rightHand;
     private final ModelPart handGlow;
-    private final ModelPart negWing;
-    private final ModelPart posWing;
 
     public AngelOfDeathBossModel(ModelPart root) {
         this.root = root;
@@ -36,8 +37,6 @@ public class AngelOfDeathBossModel extends EntityModel<AngelOfDeathBossEntity> {
         this.leftArm = this.body.getChild("left_arm");
         this.rightHand = this.rightArm.getChild("right_hand");
         this.handGlow = this.rightArm.getChild("hand_glow");
-        this.negWing = this.body.getChild("neg_wing");
-        this.posWing = this.body.getChild("pos_wing");
         this.handGlow.visible = false;
     }
 
@@ -64,10 +63,6 @@ public class AngelOfDeathBossModel extends EntityModel<AngelOfDeathBossEntity> {
         leftArm.addOrReplaceChild("left_hand",
                 CubeListBuilder.create().texOffs(0, 64).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 3.0F, 4.0F),
                 PartPose.offset(0.0F, 10.0F, 0.0F));
-        PartDefinition neg = body.addOrReplaceChild("neg_wing", CubeListBuilder.create(), PartPose.offset(0.1F, 3.0F, 3.3F));
-        WingGeometry.addNegWingBoss(neg);
-        PartDefinition pos = body.addOrReplaceChild("pos_wing", CubeListBuilder.create(), PartPose.offset(0.1F, 3.0F, 3.3F));
-        WingGeometry.addPosWingBoss(pos);
         return LayerDefinition.create(mesh, 128, 128);
     }
 
@@ -146,22 +141,19 @@ public class AngelOfDeathBossModel extends EntityModel<AngelOfDeathBossEntity> {
         lax = mix(lax, -0.1F, tw); laz = mix(laz, -2.6F, tw);
         up = mix(up, 1.0F, tw); sweep = mix(sweep, 0.0F, tw); headX = mix(headX, -0.3F, tw);
 
+        this.wingUp = up;
+        this.wingSweep = sweep;
         this.body.xRot = bodyX;
         this.head.xRot = headX + Mth.clamp(headPitch, -30.0F, 30.0F) * Mth.DEG_TO_RAD;
         this.head.yRot = Mth.clamp(netHeadYaw, -50.0F, 50.0F) * Mth.DEG_TO_RAD;
         this.rightArm.xRot = rax; this.rightArm.zRot = raz;
         this.leftArm.xRot = lax; this.leftArm.zRot = laz;
-        // -x wing: +zRot raises the tip, -yRot sweeps it forward; +x wing mirrors both.
-        this.negWing.zRot = up; this.negWing.yRot = -sweep;
-        this.posWing.zRot = -up; this.posWing.yRot = sweep;
     }
 
     /** True: only the oversized right-hand shell is drawn (for the white emissive GLOWING_HAND overlay). */
     public void setHandOnly(boolean only) {
         this.head.visible = !only;
         this.leftArm.visible = !only;
-        this.negWing.visible = !only;
-        this.posWing.visible = !only;
         this.rightHand.visible = !only;
         this.handGlow.visible = only;
         this.body.skipDraw = only;

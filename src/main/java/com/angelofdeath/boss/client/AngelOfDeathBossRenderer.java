@@ -20,6 +20,7 @@ public class AngelOfDeathBossRenderer extends MobRenderer<AngelOfDeathBossEntity
     public AngelOfDeathBossRenderer(EntityRendererProvider.Context context) {
         super(context, new AngelOfDeathBossModel(context.bakeLayer(ModModelLayers.BOSS)), 1.4F);
         addLayer(new BossHandGlowLayer(this));
+        addLayer(new BossWingsLayer(this, context.getModelSet()));
     }
 
     @Override

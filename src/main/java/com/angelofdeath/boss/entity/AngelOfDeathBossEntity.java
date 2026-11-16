@@ -1,6 +1,7 @@
 package com.angelofdeath.boss.entity;
 
 import com.angelofdeath.boss.logic.SingularityActions;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -89,6 +90,10 @@ public class AngelOfDeathBossEntity extends Monster {
     private UUID holeB;
     @Nullable
     private UUID backHole;
+    private final List<UUID> summonHoles = new ArrayList<>();
+    private final List<UUID> summonedCrows = new ArrayList<>();
+    private int crowLockTicks;
+    private double transitionBaseY;
 
     public AngelOfDeathBossEntity(EntityType<? extends AngelOfDeathBossEntity> type, Level level) {
         super(type, level);
@@ -198,7 +203,36 @@ public class AngelOfDeathBossEntity extends Monster {
 
     @Override
     public boolean isNoGravity() {
-        return true;
+        return isAirborne();
+    }
+
+    /** He walks on the ground; he only leaves it for the fusion, the crow phase and the aerial slam. */
+    private boolean isAirborne() {
+        return getTransitionTicks() > 0 || this.attack == A_CROWS || this.crowLockTicks > 0
+                || (this.attack == A_SLAM && this.stage < 3);
+    }
+
+    /** True while a pending Power-1 summon hole or a summoned crow is still alive (400-tick safety timeout). */
+    public boolean hasActiveCrows() {
+        if (this.crowLockTicks <= 0 || !(this.level() instanceof ServerLevel level)) {
+            return false;
+        }
+        for (UUID id : this.summonHoles) {
+            if (hole(level, id) != null) {
+                return true;
+            }
+        }
+        for (UUID id : this.summonedCrows) {
+            if (level.getEntity(id) instanceof VoidCrowEntity crow && crow.isAlive()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Called by a summon hole when it hatches. */
+    public void registerCrow(UUID crowId) {
+        this.summonedCrows.add(crowId);
     }
 
     @Override
@@ -328,7 +362,7 @@ public class AngelOfDeathBossEntity extends Monster {
                 blockSound();
                 return false;
             }
-            if (this.attack == A_NONE && this.guardCooldown <= 0 && getTarget() != null
+            if (this.attack == A_NONE && this.guardCooldown <= 0 && getTarget() != null && !hasActiveCrows()
                     && this.random.nextFloat() < 0.30F) {
                 startGuard();
                 blockSound();
@@ -396,6 +430,19 @@ public class AngelOfDeathBossEntity extends Monster {
     }
 
     private void flyTo(Vec3 pos, double speed) {
+        if (!isAirborne()) {
+            // grounded: stride horizontally toward the point, gravity handles the rest
+            Vec3 flat = new Vec3(pos.x - getX(), 0.0D, pos.z - getZ());
+            double fd = flat.length();
+            Vec3 cur = getDeltaMovement();
+            if (fd < 0.5D) {
+                setDeltaMovement(cur.x * 0.6D, cur.y, cur.z * 0.6D);
+            } else {
+                Vec3 want = flat.scale(Math.min(speed, 0.35D) / fd);
+                setDeltaMovement(cur.x * 0.7D + want.x * 0.3D, cur.y, cur.z * 0.7D + want.z * 0.3D);
+            }
+            return;
+        }
         Vec3 to = pos.subtract(position());
         double d = to.length();
         if (d < 0.3D) {
@@ -409,9 +456,24 @@ public class AngelOfDeathBossEntity extends Monster {
         setDeltaMovement(getDeltaMovement().scale(0.7D).add(want.scale(0.3D)));
     }
 
-    private void hover(LivingEntity target) {
-        double a = this.tickCount * 0.03D;
-        flyTo(target.position().add(Math.cos(a) * 9.0D, 4.5D, Math.sin(a) * 9.0D), 0.55D);
+    /** Grounded chase: path toward the target until he is in striking range. */
+    private void walkTo(LivingEntity target) {
+        if (distanceTo(target) > 7.0F) {
+            getNavigation().moveTo(target, 1.0D);
+        } else {
+            getNavigation().stop();
+            brake();
+        }
+    }
+
+    private double groundY(ServerLevel level) {
+        for (int i = 0; i < 24; i++) {
+            BlockPos below = BlockPos.containing(getX(), getY() - i, getZ());
+            if (!level.getBlockState(below).isAir()) {
+                return below.getY() + 1.0D;
+            }
+        }
+        return getY() - 4.0D;
     }
 
     private void brake() {
@@ -453,6 +515,14 @@ public class AngelOfDeathBossEntity extends Monster {
         if (this.guardCooldown > 0) {
             this.guardCooldown--;
         }
+        if (this.crowLockTicks > 0) {
+            this.crowLockTicks--;
+            if (!hasActiveCrows()) {
+                this.crowLockTicks = 0;
+                this.summonHoles.clear();
+                this.summonedCrows.clear();
+            }
+        }
         if (getPhase() == PHASE_ONE && !isTransitioning() && getHealth() <= getMaxHealth() * 0.5F) {
             startTransition(level);
         }
@@ -464,6 +534,17 @@ public class AngelOfDeathBossEntity extends Monster {
             maintainBackHole(level);
         }
         LivingEntity target = getTarget();
+        if (hasActiveCrows() && this.attack != A_CROWS) {
+            // strict lock: no attack of any kind until both crows are dead
+            if (this.attack != A_NONE) {
+                endAttack(level, 30);
+            }
+            if (target != null && target.isAlive()) {
+                face(target.position());
+            }
+            flyTo(new Vec3(getX(), groundY(level) + 4.0D, getZ()), 0.3D);
+            return;
+        }
         if (target == null || !target.isAlive()) {
             if (this.attack != A_NONE) {
                 endAttack(level, 40);
@@ -474,7 +555,7 @@ public class AngelOfDeathBossEntity extends Monster {
         face(target.position());
 
         if (this.attack == A_NONE) {
-            hover(target);
+            walkTo(target);
             if (this.cooldown > 0) {
                 this.cooldown--;
                 return;
@@ -587,7 +668,7 @@ public class AngelOfDeathBossEntity extends Monster {
     // ------------------------------------------------------------------ 2. False White Hole Push & Crow Summon
 
     private boolean tickCrowSummon(ServerLevel level, LivingEntity target) {
-        brake();
+        flyTo(new Vec3(getX(), groundY(level) + 4.0D, getZ()), 0.3D); // lifts off for the summon
         Vec3 hand = handLeft();
         if (this.attackTick == 1) {
             setAttackPose(3);
@@ -605,12 +686,15 @@ public class AngelOfDeathBossEntity extends Monster {
             }
         }
         if (this.attackTick == 10) {
-            for (int i = 0; i < 4; i++) {
-                double a = Math.toRadians(getYRot() + 45.0D + i * 90.0D);
-                Vec3 pos = position().add(Math.cos(a) * 4.0D, 2.5D, Math.sin(a) * 4.0D);
-                SingularityEntity h = spawn(level, i % 2, 1, 20, pos); // 2 black, 2 white
+            this.summonHoles.clear();
+            this.summonedCrows.clear();
+            for (int i = 0; i < 2; i++) {
+                Vec3 pos = position().add(0.0D, 2.5D, 0.0D).add(left().scale(i == 0 ? 4.0D : -4.0D));
+                SingularityEntity h = spawn(level, i, 1, 20, pos); // 1 Power-1 black hole, 1 Power-1 white hole
                 h.setSpawnCrowOnExpire(true);
+                this.summonHoles.add(h.getUUID());
             }
+            this.crowLockTicks = 400;
             SingularityActions.playSound(level, position(), SoundEvents.PORTAL_AMBIENT, 3.0F, 0.6F);
         }
         return this.attackTick >= 45;
@@ -623,8 +707,8 @@ public class AngelOfDeathBossEntity extends Monster {
         setGlowingHand(this.stage < 3);
         switch (this.stage) {
             case 0 -> { // ascend
-                flyTo(target.position().add(0.0D, 15.0D, 0.0D), 1.0D);
-                if (getY() >= target.getY() + 12.0D || this.attackTick >= 40) {
+                flyTo(target.position().add(0.0D, 8.0D, 0.0D), 1.0D);
+                if (getY() >= target.getY() + 6.0D || this.attackTick >= 30) {
                     this.stage = 1;
                     this.stageTick = 0;
                 }
@@ -857,6 +941,7 @@ public class AngelOfDeathBossEntity extends Monster {
 
     private void startTransition(ServerLevel level) {
         endAttack(level, 40);
+        this.transitionBaseY = getY();
         setTransitionTicks(1);
         SingularityActions.playSound(level, position(), SoundEvents.ENDER_DRAGON_GROWL, 6.0F, 0.5F);
     }
@@ -864,6 +949,9 @@ public class AngelOfDeathBossEntity extends Monster {
     private void tickTransition(ServerLevel level) {
         int t = getTransitionTicks();
         setDeltaMovement(getDeltaMovement().scale(0.5D));
+        if (getY() < this.transitionBaseY + 4.0D) {
+            setDeltaMovement(getDeltaMovement().add(0.0D, 0.12D, 0.0D));
+        }
         setAttackPose(0);
 
         // One Power-5 Black Hole and one Power-5 White Hole (visual only) spiral inward and collide.

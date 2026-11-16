@@ -46,8 +46,10 @@ public class AngelOfDeathWingsLayer extends RenderLayer<AbstractClientPlayer, Pl
         // (13.7 px down in the export) up to the shoulder blades.
         getParentModel().body.translateAndRotate(poseStack);
         poseStack.translate(0.0F, -9.7F / 16.0F, 0.0F);
+        poseStack.translate(0.0F, 0.05F, 0.24F); // out onto the surface of the back
 
         this.model.pose(ageInTicks, flying, glow);
+        this.model.setRootX(1.5F, -1.5F); // left_wing.x / right_wing.x, roots pulled toward the spine
         this.model.renderToBuffer(poseStack, buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), packedLight,
                 OverlayTexture.NO_OVERLAY, -1);
 

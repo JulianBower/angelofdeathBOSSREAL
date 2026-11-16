@@ -455,6 +455,9 @@ public class SingularityEntity extends Entity {
             if (crow != null) {
                 crow.moveTo(center.x, center.y, center.z, this.random.nextFloat() * 360.0F, 0.0F);
                 level.addFreshEntity(crow);
+                if (getOwnerUUID() != null && level.getEntity(getOwnerUUID()) instanceof AngelOfDeathBossEntity boss) {
+                    boss.registerCrow(crow.getUUID());
+                }
             }
             level.sendParticles(getMode() == 1 ? ParticleTypes.END_ROD : ParticleTypes.REVERSE_PORTAL,
                     center.x, center.y, center.z, 40, 0.6D, 0.6D, 0.6D, 0.3D);

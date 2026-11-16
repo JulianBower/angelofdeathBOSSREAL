@@ -53,6 +53,17 @@ public class AngelOfDeathWingsModel extends EntityModel<LivingEntity> {
             sweep = 0.0F;
         }
         // -x wing: +zRot raises the tip, -yRot sweeps it forward. +x wing mirrors both.
+        setWingAngles(up, sweep);
+    }
+
+    /** Pull both wing roots toward the spine so the inner tips start on the back (player layer). */
+    public void setRootX(float leftX, float rightX) {
+        this.negWing.x = leftX;
+        this.posWing.x = rightX;
+    }
+
+    /** up = tip raise (rad), sweep = forward fold (rad). -x wing: +zRot raises, -yRot folds forward; +x mirrors. */
+    public void setWingAngles(float up, float sweep) {
         this.negWing.zRot = up;
         this.negWing.yRot = -sweep;
         this.posWing.zRot = -up;
