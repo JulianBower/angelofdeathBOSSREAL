@@ -21,10 +21,6 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Quick tap (< 20 ticks): infinite spectral feather, 10-tick cooldown, no ammo. Full charge (20 ticks, beacon chime):
- * summons a 3x-Allay allied crow for 25 seconds, 160-tick cooldown. Sneaking selects black, standing selects white.
- */
 public class EclipseCrowcallerItem extends Item {
     public static final int CHARGE_TICKS = 20;
     public static final int TAP_COOLDOWN = 10;
@@ -39,10 +35,10 @@ public class EclipseCrowcallerItem extends Item {
         return UseAnim.BOW;
     }
 
-	@Override
-	public int getUseDuration(ItemStack stack, LivingEntity entity) {
-	    return 72000;
-	}
+    @Override
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+        return 72000;
+    }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -53,7 +49,7 @@ public class EclipseCrowcallerItem extends Item {
 
     @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingUseDuration) {
-        if (getUseDuration(stack) - remainingUseDuration == CHARGE_TICKS && !level.isClientSide) {
+        if (getUseDuration(stack, entity) - remainingUseDuration == CHARGE_TICKS && !level.isClientSide) {
             level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.BEACON_ACTIVATE,
                     SoundSource.PLAYERS, 1.0F, 1.2F);
         }
@@ -65,7 +61,7 @@ public class EclipseCrowcallerItem extends Item {
             return;
         }
         boolean white = !player.isShiftKeyDown();
-        int held = getUseDuration(stack) - timeLeft;
+        int held = getUseDuration(stack, entity) - timeLeft;
         if (held >= CHARGE_TICKS) {
             summonCrow(serverLevel, player, white);
             player.getCooldowns().addCooldown(this, SUMMON_COOLDOWN);
@@ -95,7 +91,7 @@ public class EclipseCrowcallerItem extends Item {
         crow.moveTo(player.getX() + look.x * 2.0D, player.getY() + 2.0D, player.getZ() + look.z * 2.0D,
                 player.getYRot(), 0.0F);
         crow.setWhite(white);
-        crow.setSummonedAlly(player.getUUID()); // 500 ticks, fights for the owner, never drops feathers
+        crow.setSummonedAlly(player.getUUID());
         level.addFreshEntity(crow);
         level.sendParticles(white ? ParticleTypes.END_ROD : ParticleTypes.REVERSE_PORTAL, crow.getX(), crow.getY() + 1.0D,
                 crow.getZ(), 40, 0.8D, 0.8D, 0.8D, 0.2D);
