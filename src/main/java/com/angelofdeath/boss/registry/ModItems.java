@@ -2,6 +2,7 @@ package com.angelofdeath.boss.registry;
 
 import com.angelofdeath.boss.AngelOfDeathBoss;
 import com.angelofdeath.boss.item.AngelWingsItem;
+import com.angelofdeath.boss.item.EclipseCrowcallerItem;
 import com.angelofdeath.boss.item.WhiteHoleSpearItem;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
@@ -33,6 +34,10 @@ public final class ModItems {
             () -> new WhiteHoleSpearItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()
                     .component(DataComponents.UNBREAKABLE, new Unbreakable(true))
                     .attributes(WhiteHoleSpearItem.attributes())));
+
+    public static final DeferredItem<EclipseCrowcallerItem> ECLIPSE_CROWCALLER = ITEMS.register("eclipse_crowcaller",
+            () -> new EclipseCrowcallerItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()
+                    .component(DataComponents.UNBREAKABLE, new Unbreakable(true))));
 
     public static final DeferredItem<DeferredSpawnEggItem> ANGEL_OF_DEATH_SPAWN_EGG = ITEMS.register(
             "angel_of_death_spawn_egg", () -> new DeferredSpawnEggItem(ModEntities.ANGEL_OF_DEATH, 0xF2F2F2, 0x111111,

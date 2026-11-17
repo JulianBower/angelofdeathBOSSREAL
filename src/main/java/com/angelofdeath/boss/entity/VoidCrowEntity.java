@@ -1,11 +1,15 @@
 package com.angelofdeath.boss.entity;
 
 import com.angelofdeath.boss.logic.SingularityActions;
+import java.util.UUID;
+import javax.annotation.Nullable;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
@@ -15,6 +19,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -28,6 +33,11 @@ public class VoidCrowEntity extends Monster {
     private static final EntityDataAccessor<Boolean> IS_WHITE =
             SynchedEntityData.defineId(VoidCrowEntity.class, EntityDataSerializers.BOOLEAN);
 
+    private static final EntityDataAccessor<Boolean> IS_ALLY =
+            SynchedEntityData.defineId(VoidCrowEntity.class, EntityDataSerializers.BOOLEAN);
+
+    public static final int ALLY_LIFETIME = 500;
+
     private static final int HOVER = 0;
     private static final int SWOOP = 1;
     private static final int CARRY = 2;
@@ -38,6 +48,9 @@ public class VoidCrowEntity extends Monster {
     private int state = HOVER;
     private int stateTick;
     private int cooldown = 20;
+    @Nullable
+    private UUID allyOwner;
+    private int allyTicks;
 
     public VoidCrowEntity(EntityType<? extends VoidCrowEntity> type, Level level) {
         super(type, level);
@@ -61,9 +74,22 @@ public class VoidCrowEntity extends Monster {
         this.entityData.set(IS_WHITE, white);
     }
 
+    /** True for crows summoned by the Eclipse Crowcaller: they fight for the owner, expire, and never drop loot. */
+    public boolean isSummonedAlly() {
+        return this.entityData.get(IS_ALLY);
+    }
+
+    public void setSummonedAlly(UUID owner) {
+        this.allyOwner = owner;
+        this.allyTicks = 0;
+        this.entityData.set(IS_ALLY, true);
+        setPersistenceRequired();
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
+        builder.define(IS_ALLY, false);
         builder.define(IS_WHITE, false);
     }
 
@@ -71,12 +97,93 @@ public class VoidCrowEntity extends Monster {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("White", isWhite());
+        tag.putBoolean("Ally", isSummonedAlly());
+        tag.putInt("AllyTicks", this.allyTicks);
+        if (this.allyOwner != null) {
+            tag.putUUID("AllyOwner", this.allyOwner);
+        }
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         setWhite(tag.getBoolean("White"));
+        if (tag.getBoolean("Ally") && tag.hasUUID("AllyOwner")) {
+            setSummonedAlly(tag.getUUID("AllyOwner"));
+            this.allyTicks = tag.getInt("AllyTicks");
+        }
+    }
+
+    // ------------------------------------------------------------------ ally behaviour
+
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (isSummonedAlly() && target != null
+                && (target instanceof Player || (target instanceof VoidCrowEntity crow && crow.isSummonedAlly()))) {
+            return; // allies never turn on players or each other
+        }
+        super.setTarget(target);
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (isSummonedAlly() && this.allyOwner != null && source.getEntity() != null
+                && this.allyOwner.equals(source.getEntity().getUUID())) {
+            return false;
+        }
+        return super.hurt(source, amount);
+    }
+
+    @Override
+    protected boolean shouldDropLoot() {
+        return !isSummonedAlly() && super.shouldDropLoot(); // summoned crows NEVER drop feathers
+    }
+
+    @Override
+    protected boolean shouldDropExperience() {
+        return !isSummonedAlly() && super.shouldDropExperience();
+    }
+
+    private boolean validEnemy(@Nullable LivingEntity e, ServerPlayer owner) {
+        return e != null && e.isAlive() && e != owner && e != this && !(e instanceof Player)
+                && !(e instanceof VoidCrowEntity crow && crow.isSummonedAlly()) && e.distanceTo(owner) < 32.0F;
+    }
+
+    /** Returns true when a target exists and the normal attack state machine should run. */
+    private boolean tickAlly(ServerLevel level) {
+        ServerPlayer owner = this.allyOwner == null ? null : level.getServer().getPlayerList().getPlayer(this.allyOwner);
+        if (owner == null || !owner.isAlive() || owner.level() != level || ++this.allyTicks > ALLY_LIFETIME) {
+            level.sendParticles(ParticleTypes.REVERSE_PORTAL, getX(), getY() + 1.0D, getZ(), 30, 0.5D, 0.5D, 0.5D, 0.2D);
+            discard();
+            return false;
+        }
+        LivingEntity target = getTarget();
+        if (!validEnemy(target, owner) || this.tickCount % 20 == 0) {
+            LivingEntity pick = owner.getLastHurtMob();
+            if (!validEnemy(pick, owner)) {
+                pick = owner.getLastHurtByMob();
+            }
+            if (!validEnemy(pick, owner)) {
+                pick = null;
+                double best = Double.MAX_VALUE;
+                for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, owner.getBoundingBox().inflate(20.0D),
+                        x -> x instanceof Enemy && validEnemy(x, owner))) {
+                    double d = e.distanceToSqr(this);
+                    if (d < best) {
+                        best = d;
+                        pick = e;
+                    }
+                }
+            }
+            setTarget(pick);
+        }
+        if (getTarget() == null) {
+            double a = this.tickCount * 0.08D + (getId() % 8);
+            flyTo(owner.position().add(Math.cos(a) * 2.5D, 3.2D, Math.sin(a) * 2.5D), 0.6D);
+            getLookControl().setLookAt(owner, 30.0F, 30.0F);
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -120,6 +227,9 @@ public class VoidCrowEntity extends Monster {
     protected void customServerAiStep() {
         super.customServerAiStep();
         if (!(this.level() instanceof ServerLevel level)) {
+            return;
+        }
+        if (isSummonedAlly() && !tickAlly(level)) {
             return;
         }
         LivingEntity target = getTarget();

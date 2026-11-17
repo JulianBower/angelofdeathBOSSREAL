@@ -58,7 +58,7 @@ public class WhiteHoleSpearItem extends Item {
     }
 
     @Override
-    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+    public int getUseDuration(ItemStack stack) {
         return 72000;
     }
 
@@ -77,7 +77,7 @@ public class WhiteHoleSpearItem extends Item {
     /** Holding right-click for 25 ticks stores the charge on the stack. */
     @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingUseDuration) {
-        int used = getUseDuration(stack, entity) - remainingUseDuration;
+        int used = getUseDuration(stack) - remainingUseDuration;
         if (used == CHARGE_TICKS && !level.isClientSide && !isCharged(stack)) {
             stack.set(ModComponents.IS_CHARGED.get(), true);
             level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.BEACON_ACTIVATE,
@@ -90,13 +90,13 @@ public class WhiteHoleSpearItem extends Item {
         if (level.isClientSide || !(entity instanceof ServerPlayer player)) {
             return;
         }
-        if (getUseDuration(stack, entity) - timeLeft < MIN_THROW_TICKS) {
+        if (getUseDuration(stack) - timeLeft < MIN_THROW_TICKS) {
             return;
         }
         boolean charged = isCharged(stack);
         int slot = player.getUsedItemHand() == InteractionHand.MAIN_HAND ? player.getInventory().selected : 40;
         ItemStack thrown = stack.copy();
-        thrown.set(ModComponents.IS_CHARGED.get(), false);
+        thrown.set(ModComponents.IS_CHARGED.get(), false); // the charge is spent by this throw
 
         WhiteHoleSpearEntity spear = new WhiteHoleSpearEntity(level, player, thrown, slot, charged);
         Vec3 look = player.getLookAngle();
@@ -107,7 +107,7 @@ public class WhiteHoleSpearItem extends Item {
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PHANTOM_SWOOP,
                 SoundSource.PLAYERS, 1.0F, charged ? 0.6F : 1.0F);
         player.awardStat(Stats.ITEM_USED.get(this));
-        stack.shrink(1);
+        stack.shrink(1); // flies off; the entity brings it back to this slot
     }
 
     /** Charged melee hit: spend the charge for an instant White-Hole burst. */

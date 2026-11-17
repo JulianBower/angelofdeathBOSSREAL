@@ -36,6 +36,7 @@ public class VoidFeatherEntity extends Projectile {
 
     private int stuckTicks;
     private int clientStuckAge;
+    private boolean spectral;
     private int flightTicks;
     @Nullable
     private UUID stuckTarget;
@@ -65,6 +66,11 @@ public class VoidFeatherEntity extends Projectile {
         return this.clientStuckAge;
     }
 
+    /** Crowcaller feather: also hits the boss / hostile crows, never allied crows, and pops with its own burst. */
+    public void setSpectral(boolean spectral) {
+        this.spectral = spectral;
+    }
+
     public boolean isStuck() {
         return this.entityData.get(STUCK);
     }
@@ -79,12 +85,14 @@ public class VoidFeatherEntity extends Projectile {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("White", isWhite());
+        tag.putBoolean("Spectral", this.spectral);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         setWhite(tag.getBoolean("White"));
+        this.spectral = tag.getBoolean("Spectral");
     }
 
     @Override
@@ -94,6 +102,11 @@ public class VoidFeatherEntity extends Projectile {
 
     @Override
     protected boolean canHitEntity(Entity entity) {
+        if (this.spectral) {
+            return super.canHitEntity(entity) && !(entity instanceof SingularityEntity)
+                    && !(entity instanceof VoidFeatherEntity)
+                    && !(entity instanceof VoidCrowEntity crow && crow.isSummonedAlly());
+        }
         return super.canHitEntity(entity) && !(entity instanceof AngelOfDeathBossEntity)
                 && !(entity instanceof VoidCrowEntity) && !(entity instanceof VoidFeatherEntity)
                 && !(entity instanceof SingularityEntity);
@@ -170,8 +183,41 @@ public class VoidFeatherEntity extends Projectile {
         stick();
     }
 
+    /** White: high-knockback pop. Black: drags nearby enemies slightly toward the struck target. */
+    private void popSpectral(ServerLevel level) {
+        Vec3 center = position();
+        UUID ownerId = getOwner() != null ? getOwner().getUUID() : null;
+        SingularityActions.spawnHole(level, isWhite() ? 1 : 0, 1, ownerId, true, 8, center); // visual only
+        net.minecraft.world.damagesource.DamageSource source = isWhite() ? level.damageSources().explosion(this, getOwner())
+                : SingularityActions.voidSource(level, this, getOwner());
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(center, center).inflate(5.0D),
+                x -> x != getOwner() && SingularityActions.canHarm(x)
+                        && !(x instanceof VoidCrowEntity crow && crow.isSummonedAlly()))) {
+            Vec3 away = e.getBoundingBox().getCenter().subtract(center);
+            double d = away.length();
+            if (isWhite()) {
+                if (d <= 3.5D) {
+                    e.invulnerableTime = 0;
+                    e.hurt(source, BLAST_DAMAGE);
+                    SingularityActions.launch(e, away, 2.6D * (1.0D - 0.4D * d / 3.5D), 0.5D);
+                }
+            } else {
+                if (d <= 3.5D) {
+                    e.invulnerableTime = 0;
+                    e.hurt(source, BLAST_DAMAGE);
+                }
+                SingularityActions.pull(e, center, 0.9D, 1.1D); // slight drag toward the struck target
+            }
+        }
+    }
+
     private void detonate() {
         if (this.level() instanceof ServerLevel level) {
+            if (this.spectral) {
+                popSpectral(level);
+                discard();
+                return;
+            }
             UUID owner = getOwner() != null ? getOwner().getUUID() : null;
             // Tiny visual-only hole: attack variant => no gravity pull, no push, just the 6.0F AoE pulse.
             SingularityEntity hole = SingularityActions.spawnHole(level, isWhite() ? 1 : 0, 1, owner, true, 8, position());

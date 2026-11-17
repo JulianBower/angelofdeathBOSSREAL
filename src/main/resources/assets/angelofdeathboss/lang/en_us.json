@@ -22,5 +22,9 @@
   "tooltip.angelofdeathboss.spear_griefing_on": "Block Griefing: ON",
   "tooltip.angelofdeathboss.spear_griefing_off": "Block Griefing: OFF",
   "tooltip.angelofdeathboss.spear_charged": "Charged - next hit or throw detonates",
-  "tooltip.angelofdeathboss.spear_hint": "Hold right-click 25 ticks to charge. Press X to toggle block griefing."
+  "tooltip.angelofdeathboss.spear_hint": "Hold right-click 25 ticks to charge. Press X to toggle block griefing.",
+  "item.angelofdeathboss.eclipse_crowcaller": "Eclipse Crowcaller",
+  "tooltip.angelofdeathboss.crowcaller_tap": "Tap right-click: infinite spectral feather",
+  "tooltip.angelofdeathboss.crowcaller_charge": "Hold 20 ticks, release: summon an allied crow (25s)",
+  "tooltip.angelofdeathboss.crowcaller_sneak": "Standing: White. Sneaking: Black."
 }
