@@ -39,10 +39,10 @@ public class EclipseCrowcallerItem extends Item {
         return UseAnim.BOW;
     }
 
-    @Override
-    public int getUseDuration(ItemStack stack) {
-        return 72000;
-    }
+	@Override
+	public int getUseDuration(ItemStack stack, LivingEntity entity) {
+	    return 72000;
+	}
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
