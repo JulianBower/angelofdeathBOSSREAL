@@ -1,7 +1,12 @@
 package com.angelofdeath.boss.client;
 
 import com.angelofdeath.boss.AngelOfDeathBoss;
+import com.angelofdeath.boss.item.WhiteHoleSpearItem;
 import com.angelofdeath.boss.registry.ModEntities;
+import com.angelofdeath.boss.registry.ModItems;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -22,6 +27,7 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntities.WHITE_CROW.get(), VoidCrowRenderer::new);
         event.registerEntityRenderer(ModEntities.VOID_FEATHER.get(), VoidFeatherRenderer::new);
         event.registerEntityRenderer(ModEntities.SINGULARITY.get(), SingularityRenderer::new);
+        event.registerEntityRenderer(ModEntities.WHITE_HOLE_SPEAR.get(), WhiteHoleSpearRenderer::new);
     }
 
     @SubscribeEvent
@@ -43,5 +49,14 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerKeys(RegisterKeyMappingsEvent event) {
         event.register(WingsClientHandler.BOOST_KEY);
+        event.register(SpearClientHandler.TOGGLE_KEY);
+    }
+
+    /** Lets the item model swap to the glow variant while the spear holds a stored charge. */
+    @SubscribeEvent
+    public static void clientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> ItemProperties.register(ModItems.WHITE_HOLE_SPEAR.get(),
+                ResourceLocation.fromNamespaceAndPath(AngelOfDeathBoss.MOD_ID, "charged"),
+                (stack, level, entity, seed) -> WhiteHoleSpearItem.isCharged(stack) ? 1.0F : 0.0F));
     }
 }

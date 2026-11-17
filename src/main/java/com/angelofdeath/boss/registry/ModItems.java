@@ -2,11 +2,14 @@ package com.angelofdeath.boss.registry;
 
 import com.angelofdeath.boss.AngelOfDeathBoss;
 import com.angelofdeath.boss.item.AngelWingsItem;
+import com.angelofdeath.boss.item.WhiteHoleSpearItem;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.component.Unbreakable;
 import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -25,6 +28,11 @@ public final class ModItems {
             ITEMS.register("white_feather", () -> new Item(new Item.Properties()));
     public static final DeferredItem<AngelWingsItem> ANGEL_OF_DEATH_WINGS = ITEMS.register("angel_of_death_wings",
             () -> new AngelWingsItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+
+    public static final DeferredItem<WhiteHoleSpearItem> WHITE_HOLE_SPEAR = ITEMS.register("white_hole_spear",
+            () -> new WhiteHoleSpearItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()
+                    .component(DataComponents.UNBREAKABLE, new Unbreakable(true))
+                    .attributes(WhiteHoleSpearItem.attributes())));
 
     public static final DeferredItem<DeferredSpawnEggItem> ANGEL_OF_DEATH_SPAWN_EGG = ITEMS.register(
             "angel_of_death_spawn_egg", () -> new DeferredSpawnEggItem(ModEntities.ANGEL_OF_DEATH, 0xF2F2F2, 0x111111,

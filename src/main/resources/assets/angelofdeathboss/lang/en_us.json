@@ -13,5 +13,14 @@
   "entity.angelofdeathboss.singularity": "Singularity",
   "entity.angelofdeathboss.void_feather": "Void Feather",
   "key.angelofdeathboss.wings_boost": "Wings Boost",
-  "key.categories.angelofdeathboss": "The Angel of Death"
+  "key.categories.angelofdeathboss": "The Angel of Death",
+  "item.angelofdeathboss.white_hole_spear": "White-Hole Spear",
+  "entity.angelofdeathboss.white_hole_spear": "White-Hole Spear",
+  "key.angelofdeathboss.spear_blast_toggle": "Toggle Spear Block Griefing",
+  "message.angelofdeathboss.spear_griefing_on": "Block Griefing: ON",
+  "message.angelofdeathboss.spear_griefing_off": "Block Griefing: OFF",
+  "tooltip.angelofdeathboss.spear_griefing_on": "Block Griefing: ON",
+  "tooltip.angelofdeathboss.spear_griefing_off": "Block Griefing: OFF",
+  "tooltip.angelofdeathboss.spear_charged": "Charged - next hit or throw detonates",
+  "tooltip.angelofdeathboss.spear_hint": "Hold right-click 25 ticks to charge. Press X to toggle block griefing."
 }

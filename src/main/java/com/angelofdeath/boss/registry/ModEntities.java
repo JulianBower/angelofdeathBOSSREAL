@@ -5,6 +5,7 @@ import com.angelofdeath.boss.entity.AngelOfDeathBossEntity;
 import com.angelofdeath.boss.entity.SingularityEntity;
 import com.angelofdeath.boss.entity.VoidCrowEntity;
 import com.angelofdeath.boss.entity.VoidFeatherEntity;
+import com.angelofdeath.boss.entity.WhiteHoleSpearEntity;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -44,6 +45,11 @@ public final class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<AngelOfDeathBossEntity>> ANGEL_OF_DEATH = register(
             "angel_of_death", () -> EntityType.Builder.<AngelOfDeathBossEntity>of(AngelOfDeathBossEntity::new, MobCategory.MONSTER)
                     .sized(1.2F, 3.6F).clientTrackingRange(16).fireImmune().build("angel_of_death"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<WhiteHoleSpearEntity>> WHITE_HOLE_SPEAR = register(
+            "white_hole_spear", () -> EntityType.Builder.<WhiteHoleSpearEntity>of(WhiteHoleSpearEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F).clientTrackingRange(16).updateInterval(1).fireImmune().noSummon()
+                    .build("white_hole_spear"));
 
     private ModEntities() {
     }

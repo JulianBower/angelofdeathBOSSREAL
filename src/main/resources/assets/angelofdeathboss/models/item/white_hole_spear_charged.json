@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "angelofdeathboss:item/white_hole_spear",
+    "layer1": "angelofdeathboss:item/white_hole_spear_glow"
+  }
+}

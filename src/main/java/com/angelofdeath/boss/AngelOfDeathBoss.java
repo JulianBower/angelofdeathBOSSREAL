@@ -3,8 +3,10 @@ package com.angelofdeath.boss;
 import com.angelofdeath.boss.entity.AngelOfDeathBossEntity;
 import com.angelofdeath.boss.entity.VoidCrowEntity;
 import com.angelofdeath.boss.network.BoostGlowPayload;
+import com.angelofdeath.boss.network.ToggleSpearGriefingPayload;
 import com.angelofdeath.boss.network.WingsBoostPayload;
 import com.angelofdeath.boss.registry.ModAttachments;
+import com.angelofdeath.boss.registry.ModComponents;
 import com.angelofdeath.boss.registry.ModEntities;
 import com.angelofdeath.boss.registry.ModItems;
 import net.neoforged.bus.api.IEventBus;
@@ -21,6 +23,7 @@ public class AngelOfDeathBoss {
         ModItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);
         ModAttachments.ATTACHMENTS.register(modBus);
+        ModComponents.COMPONENTS.register(modBus);
         modBus.addListener(AngelOfDeathBoss::registerAttributes);
         modBus.addListener(AngelOfDeathBoss::registerPayloads);
     }
@@ -34,6 +37,8 @@ public class AngelOfDeathBoss {
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
         var registrar = event.registrar("1");
         registrar.playToServer(WingsBoostPayload.TYPE, WingsBoostPayload.CODEC, WingsBoostPayload::handle);
+        registrar.playToServer(ToggleSpearGriefingPayload.TYPE, ToggleSpearGriefingPayload.CODEC,
+                ToggleSpearGriefingPayload::handle);
         registrar.playToClient(BoostGlowPayload.TYPE, BoostGlowPayload.CODEC, BoostGlowPayload::handle);
     }
 }

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "angelofdeathboss:item/white_hole_spear"
+  },
+  "overrides": [
+    { "predicate": { "angelofdeathboss:charged": 1 }, "model": "angelofdeathboss:item/white_hole_spear_charged" }
+  ]
+}
