@@ -58,7 +58,7 @@ public class WhiteHoleSpearItem extends Item {
     }
 
     @Override
-    public int getUseDuration(ItemStack stack) {
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return 72000;
     }
 
@@ -77,7 +77,7 @@ public class WhiteHoleSpearItem extends Item {
     /** Holding right-click for 25 ticks stores the charge on the stack. */
     @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingUseDuration) {
-        int used = getUseDuration(stack) - remainingUseDuration;
+        int used = getUseDuration(stack, entity) - remainingUseDuration;
         if (used == CHARGE_TICKS && !level.isClientSide && !isCharged(stack)) {
             stack.set(ModComponents.IS_CHARGED.get(), true);
             level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.BEACON_ACTIVATE,
@@ -90,38 +90,7 @@ public class WhiteHoleSpearItem extends Item {
         if (level.isClientSide || !(entity instanceof ServerPlayer player)) {
             return;
         }
-        if (getUseDuration(stack) - timeLeft < MIN_THROW_TICKS) {
-            return;
-        }
-        boolean charged = isCharged(stack);
-        int slot = player.getUsedItemHand() == InteractionHand.MAIN_HAND ? player.getInventory().selected : 40;
-        ItemStack thrown = stack.copy();
-        thrown.set(ModComponents.IS_CHARGED.get(), false); // the charge is spent by this throw
-
-        WhiteHoleSpearEntity spear = new WhiteHoleSpearEntity(level, player, thrown, slot, charged);
-        Vec3 look = player.getLookAngle();
-        spear.setPos(player.getX() + look.x * 0.6D, player.getEyeY() - 0.15D + look.y * 0.6D, player.getZ() + look.z * 0.6D);
-        float speed = charged ? VANILLA_TRIDENT_SPEED * 3.0F : VANILLA_TRIDENT_SPEED;
-        spear.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, speed, 0.0F);
-        level.addFreshEntity(spear);
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PHANTOM_SWOOP,
-                SoundSource.PLAYERS, 1.0F, charged ? 0.6F : 1.0F);
-        player.awardStat(Stats.ITEM_USED.get(this));
-        stack.shrink(1); // flies off; the entity brings it back to this slot
-    }
-
-    /** Charged melee hit: spend the charge for an instant White-Hole burst. */
-    @Override
-    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (isCharged(stack) && attacker.level() instanceof ServerLevel level) {
-            stack.set(ModComponents.IS_CHARGED.get(), false);
-            SpearBlasts.meleeBurst(level, attacker, target, destroysBlocks(stack));
-        }
-        return true;
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        if (getUseDuration(stack, entity) - timeLeft  tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable(destroysBlocks(stack) ? "tooltip.angelofdeathboss.spear_griefing_on"
                 : "tooltip.angelofdeathboss.spear_griefing_off"));
         if (isCharged(stack)) {
