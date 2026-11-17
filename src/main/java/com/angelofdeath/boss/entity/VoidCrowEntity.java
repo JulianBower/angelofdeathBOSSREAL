@@ -140,7 +140,7 @@ public class VoidCrowEntity extends Monster {
     }
 
     @Override
-    protected boolean shouldDropExperience() {
+    public boolean shouldDropExperience() {
         return !isSummonedAlly() && super.shouldDropExperience();
     }
 
