@@ -61,7 +61,6 @@ public class WhiteHoleSpearItem extends Item {
 	public int getUseDuration(ItemStack stack, LivingEntity entity) {
 	    return 72000;
 	}
-}
 
     @Override
     public boolean isFoil(ItemStack stack) {
